@@ -8,8 +8,10 @@ public class DigitCategorizer {
 	
 	public static final int ROWS = 2810;
 	public static final int COLUMNS = 65;
+	public static final int INPUT_DIMENSION = COLUMNS-1;
 	public static int[][] test_fold = new int[ROWS][COLUMNS];
 	public static int[][] train_fold = new int[ROWS][COLUMNS];
+	
 
 
 	public static final String FILE_LOCATION = System.getProperty("user.dir");
@@ -69,7 +71,7 @@ public class DigitCategorizer {
 		
 		double sum = 0.0;
 		
-		for (int valueIndex = 0; valueIndex < COLUMNS-1; valueIndex++) {
+		for (int valueIndex = 0; valueIndex < INPUT_DIMENSION; valueIndex++) {
 			sum += Math.pow(digit1[valueIndex] - digit2[valueIndex], 2);
 		}
 		
