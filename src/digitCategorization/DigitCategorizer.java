@@ -2,6 +2,7 @@ package digitCategorization;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Random;
 import java.util.Scanner;
 
 public class DigitCategorizer {
@@ -21,11 +22,18 @@ public class DigitCategorizer {
 	public static final File TRAIN_FILE = new File(TRAIN_FILE_PATH);
 
 	public static void main(String[] args) {
+		
 		readFile(TEST_FILE, test_fold);
 		readFile(TRAIN_FILE, train_fold);
 		
-		System.out.println(euclidianDistanceTwoFoldCrossValidation(train_fold, test_fold));
+		//Euclidian distance categorizaion
+		System.out.println("Euclidean distance: " + euclidianDistanceTwoFoldCrossValidation(train_fold, test_fold));
 		
+		//MLP categorization
+		Random r = new Random();
+		MLP mlp = new MLP();
+		mlp.init();
+
 	}
 	
 	public static void readFile(File file, int[][] array) {
@@ -75,9 +83,9 @@ public class DigitCategorizer {
 			sum += Math.pow(digit1[valueIndex] - digit2[valueIndex], 2);
 		}
 		
-		distance = Math.sqrt(sum);
+//		distance = Math.sqrt(sum);
 		
-		return distance;
+		return sum;
 	}
 	
 	public static int[] findTheClosest(int[][] train_set, int[][] test_set) {
