@@ -49,16 +49,24 @@ public class MLP {
 		return 1.0 / (1.0 + Math.exp(-input));
 	}
 
-	public static double[] feed(int currentLayerNeurons, double[] outputPreviousLayer, double[][] weigths,
-			double[] biases) {
+	public static double[] feedForward(int currentLayerNeurons, double[] outputPreviousLayer, double[][] weigths,
+			double[] biases, boolean isFirst) {
 		
 		double[] currentLayerOutput = new double[currentLayerNeurons];
 		
 		//for every neuron in the current layer: add weighted inputs, add bias and apply logistic function
 		for (int neuron = 0; neuron < currentLayerNeurons; neuron++) {
-			for (int input = 0; input < outputPreviousLayer.length; input++) {
-				currentLayerOutput[neuron] += outputPreviousLayer[input] * weigths[neuron][input];
+			//if it is the first layer skip the last feature (it is a category label)
+			if (isFirst) {
+				for (int input = 0; input < outputPreviousLayer.length-1; input++) {
+					currentLayerOutput[neuron] += outputPreviousLayer[input] * weigths[neuron][input];
+				}
+			} else {
+				for (int input = 0; input < outputPreviousLayer.length; input++) {
+					currentLayerOutput[neuron] += outputPreviousLayer[input] * weigths[neuron][input];
+				}
 			}
+			
 			currentLayerOutput[neuron] += biases[neuron];
 			currentLayerOutput[neuron] = logistic(currentLayerOutput[neuron]);
 		}
@@ -66,26 +74,60 @@ public class MLP {
 		return currentLayerOutput;
 	}
 	
-	//loss function
-	public static double loss(int category, double[] actualOutput) {
+	//loss function for the individual output
+	public double loss(int category, double[] actualOutput) {
+		
 		double[] expectedOutput = new double[NEURONS_OUTPUT_LAYER];
 		expectedOutput[category] = 1.0;
-		
+		return euclideanDistance(expectedOutput, actualOutput);
 		
 	}
 	
-	public static double euclideanDistance(double[] expectedOutput, double[] actualOutput) {
-		double distance = 0.0;
+	//used to calculate the loss function
+	public double euclideanDistance(double[] expectedOutput, double[] actualOutput) {
 		
 		double sum = 0.0;
-		
 		for (int output = 0; output < expectedOutput.length; output++) {
 			sum += Math.pow(expectedOutput[output] - actualOutput[output], 2);
 		}
-		
-		distance = Math.sqrt(sum);
-		
-		return distance;
+		return sum;
 	}
+	
+	public double[][] convertToDouble(int[][] dataSet) {
+		double[][] newDataset = new double[dataSet.length][dataSet[0].length];
+		for (int row = 0; row < dataSet.length; row++) {
+			for (int column = 0; column < dataSet[row].length; column++) {
+				newDataset[row][column] = (double)dataSet[row][column];
+			}
+		}
+		return newDataset;
+	}
+	
+
+	//feed the network once with the whole training set and return the total loss of the network
+	//by adding the cost after every network input and calculating the average (dividing by the number of input items)
+	public double train(int[][] trainigSet) {
+		double cost = 0.0;
+		int[] categories = DigitCategorizer.extractCategories(trainigSet);
+		double[][] trainSetDouble = convertToDouble(trainigSet);
+		for (int input = 0; input < trainigSet.length; input++) {
+			double[] outputL2 = new double[NEURONS_HIDDEN_LAYER];
+			//feed hidden layer
+			outputL2 = feedForward(NEURONS_HIDDEN_LAYER, trainSetDouble[input], weights1to2, biasesL2, true);
+			//feed output layer
+			double[] outputL3 = new double[NEURONS_OUTPUT_LAYER];
+			outputL3 = feedForward(NEURONS_OUTPUT_LAYER, outputL2, weights2to3, biasesL3, false);
+			cost += loss(categories[input], outputL3);
+			
+			for (int row = 0; row < outputL3.length; row++) {
+					System.out.print(input + ". " + outputL3[row]);
+				
+			}
+			System.out.println();
+		}
+		return cost/trainigSet.length;
+	}
+	
+
 
 }
