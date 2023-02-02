@@ -33,7 +33,7 @@ public class DigitCategorizer {
 		Random r = new Random();
 		MLP mlp = new MLP();
 		mlp.init();
-		mlp.train(train_fold);
+		mlp.cost(train_fold);
 
 	}
 	
@@ -85,14 +85,10 @@ public class DigitCategorizer {
 	}
 	
 	public static double euclideanDistance(int[] digit1, int[] digit2) {
-		
 		double sum = 0.0;
-		
 		for (int valueIndex = 0; valueIndex < INPUT_DIMENSION; valueIndex++) {
 			sum += Math.pow(digit1[valueIndex] - digit2[valueIndex], 2);
 		}
-		
-		
 		return sum;
 	}
 	

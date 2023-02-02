@@ -2,6 +2,10 @@ package digitCategorization;
 
 import java.util.Random;
 
+/*PROBLEMS
+
+ * */
+
 public class MLP {
 
 	public final static int NEURONS_INPUT_LAYER = 64;
@@ -74,17 +78,17 @@ public class MLP {
 		return currentLayerOutput;
 	}
 	
-	//loss function for the individual output
+	//loss function for the individual input
 	public double loss(int category, double[] actualOutput) {
 		
 		double[] expectedOutput = new double[NEURONS_OUTPUT_LAYER];
 		expectedOutput[category] = 1.0;
-		return euclideanDistance(expectedOutput, actualOutput);
+		return squaredError(expectedOutput, actualOutput);
 		
 	}
 	
 	//used to calculate the loss function
-	public double euclideanDistance(double[] expectedOutput, double[] actualOutput) {
+	public double squaredError(double[] expectedOutput, double[] actualOutput) {
 		
 		double sum = 0.0;
 		for (int output = 0; output < expectedOutput.length; output++) {
@@ -104,12 +108,12 @@ public class MLP {
 	}
 	
 
-	//feed the network once with the whole training set and return the total loss of the network
-	//by adding the cost after every network input and calculating the average (dividing by the number of input items)
-	public double train(int[][] trainigSet) {
+	//feed the network once with the whole training set and return the average cost of the network
+	public double cost(int[][] trainigSet) {
 		double cost = 0.0;
 		int[] categories = DigitCategorizer.extractCategories(trainigSet);
 		double[][] trainSetDouble = convertToDouble(trainigSet);
+		int correctOutputCounter = 0;
 		for (int input = 0; input < trainigSet.length; input++) {
 			double[] outputL2 = new double[NEURONS_HIDDEN_LAYER];
 			//feed hidden layer
@@ -118,14 +122,37 @@ public class MLP {
 			double[] outputL3 = new double[NEURONS_OUTPUT_LAYER];
 			outputL3 = feedForward(NEURONS_OUTPUT_LAYER, outputL2, weights2to3, biasesL3, false);
 			cost += loss(categories[input], outputL3);
+			if (outputCat(outputL3) == categories[input]) correctOutputCounter++;
 			
-			for (int row = 0; row < outputL3.length; row++) {
-					System.out.print(input + ". " + outputL3[row]);
-				
+			//TEST
+			if (input % 250 == 0) {
+				System.out.println("Input no. " + input);
+				System.out.println("Correct category: " + categories[input]);
+				System.out.println("Output category: " + outputCat(outputL3));
+				for (int neuron = 0; neuron < outputL3.length; neuron++) {
+					System.out.println(neuron + ". " + outputL3[neuron]);
+				}
+				System.out.println();
 			}
-			System.out.println();
+
 		}
+		System.out.println("Average cost: " + cost/trainigSet.length);
+		System.out.println("Accuracy: " + (double)correctOutputCounter/trainigSet.length);
+		
 		return cost/trainigSet.length;
+		
+	}
+	
+	public int outputCat(double[] output) {
+		double max = 0.0;
+		int indexMax = 0;
+		for (int neuron = 0; neuron < output.length; neuron++) {
+			if (max < output[neuron]) {
+				max = output[neuron];
+				indexMax = neuron;
+			}
+		}
+		return indexMax;
 	}
 	
 
