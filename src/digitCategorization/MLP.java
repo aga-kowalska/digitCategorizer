@@ -62,7 +62,7 @@ public class MLP {
 		for (int neuron = 0; neuron < currentLayerNeurons; neuron++) {
 			//if it is the first layer skip the last feature (it is a category label)
 			if (isFirst) {
-				for (int input = 0; input < outputPreviousLayer.length-1; input++) {
+				for (int input = 0; input < DigitCategorizer.INPUT_DIMENSION; input++) {
 					currentLayerOutput[neuron] += outputPreviousLayer[input] * weigths[neuron][input];
 				}
 			} else {
@@ -80,16 +80,13 @@ public class MLP {
 	
 	//loss function for the individual input
 	public double loss(int category, double[] actualOutput) {
-		
 		double[] expectedOutput = new double[NEURONS_OUTPUT_LAYER];
 		expectedOutput[category] = 1.0;
 		return squaredError(expectedOutput, actualOutput);
-		
 	}
 	
 	//used to calculate the loss function
 	public double squaredError(double[] expectedOutput, double[] actualOutput) {
-		
 		double sum = 0.0;
 		for (int output = 0; output < expectedOutput.length; output++) {
 			sum += Math.pow(expectedOutput[output] - actualOutput[output], 2);
@@ -109,6 +106,7 @@ public class MLP {
 	
 
 	//feed the network once with the whole training set and return the average cost of the network
+	//UNDONE: mini-batches
 	public double cost(int[][] trainigSet) {
 		double cost = 0.0;
 		int[] categories = DigitCategorizer.extractCategories(trainigSet);
@@ -154,6 +152,16 @@ public class MLP {
 		}
 		return indexMax;
 	}
+	
+	public int[][] miniBatch(int factor, int offset, int[][] trainingSet) {
+		int[][] miniBatch = new int[offset][DigitCategorizer.COLUMNS];
+		for (int digit = factor * offset, digMiniBatch = 0; digit < offset; digit++, digMiniBatch++) {
+			miniBatch[digMiniBatch] = trainingSet[digit];
+		}
+		return miniBatch;
+	}
+	
+	
 	
 
 
