@@ -33,8 +33,17 @@ public class DigitCategorizer {
 		Random r = new Random();
 		MLP mlp = new MLP();
 		mlp.init();
-		mlp.cost(train_fold);
-
+		double result;
+		double max = 0.0;
+		for (int i = 0; i <5000; i++) {
+			mlp.updateWeights(train_fold);
+			result = mlp.test(test_fold);
+			if (result > max) {
+				max = result;
+				System.out.println("MLP. Accuracy: " + result);
+			}
+			
+		}
 	}
 	
 	public static void readFile(File file, int[][] array) {
