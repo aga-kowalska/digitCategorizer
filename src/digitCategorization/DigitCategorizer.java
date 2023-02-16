@@ -12,8 +12,6 @@ public class DigitCategorizer {
 	public static final int INPUT_DIMENSION = COLUMNS-1;
 	public static int[][] test_fold = new int[ROWS][COLUMNS];
 	public static int[][] train_fold = new int[ROWS][COLUMNS];
-	
-
 
 	public static final String FILE_LOCATION = System.getProperty("user.dir");
 	public static final String TEST_FILE_PATH = FILE_LOCATION + File.separator + "cw2DataSet1.csv";
@@ -26,28 +24,70 @@ public class DigitCategorizer {
 		readFile(TEST_FILE, test_fold);
 		readFile(TRAIN_FILE, train_fold);
 		
-		//Euclidian distance categorizaion
-		System.out.println("Euclidean distance: " + euclidianDistanceTwoFoldCrossValidation(train_fold, test_fold));
+		System.out.println("Digit Categorization Task, UCI digit dataset.\n");
 		
-		//MLP categorization
-		Random r = new Random();
-		MLP mlp = new MLP();
-		mlp.init();
-		double result;
-		double max = 0.0;
-		for (int i = 0; i <5000; i++) {
-			mlp.updateWeights(train_fold);
-			result = mlp.test(test_fold);
-			if (result > max) {
-				max = result;
-				System.out.println("MLP. Accuracy: " + result);
-			}
-			
-		}
+		//Euclidian distance
+		System.out.printf("Euclidean distance two fold verification: %.2f%% \n", euclidianDistanceTwoFoldCrossValidation(train_fold, test_fold));
+		
+		//MLP
+		//switch isPrinted to false if you don't want to see the progress of learning, just the final result of the two fold verification
+		boolean isPrinted = false;
+		int iteration = 500;
+		System.out.printf("\nMulti-Layer Perceptron two fold verification: %.2f%% ", MLPTwoFoldVerification(train_fold, test_fold, iteration, isPrinted));
 	}
 	
+	//method to perform two fold verification of training MLP algorithm 
+	public static double MLPTwoFoldVerification(int[][] trainfold, int[][] testfold, int numberOfIterations, boolean isPrinted) {
+		double finalResult;
+		double partialResult;
+		double max = 0.0;
+		MLP mlp = new MLP();
+		//first fold
+		mlp.init();
+		if (isPrinted) System.out.println("\n----------------------------------------------------MLP First Fold-------------------------------------------------- ");
+		for (int iteration = 0; iteration < numberOfIterations; iteration++) {
+			mlp.updateWeights(trainfold);
+			partialResult = mlp.test(testfold);
+			if (partialResult > max) {
+				max = partialResult;
+				if (isPrinted) System.out.printf("MLP. Accuracy. 1st fold: %.2f%% Iteration: %d\n", partialResult, iteration);
+			}
+		}
+		finalResult = max;
+		//second fold
+		mlp.init();
+		max = 0.0;
+		if (isPrinted) System.out.println("\n----------------------------------------------------MLP Second Fold-------------------------------------------------- ");
+		for (int iteration = 0; iteration < numberOfIterations; iteration++) {
+			mlp.updateWeights(testfold);
+			partialResult = mlp.test(testfold);
+			if (partialResult > max) {
+				max = partialResult;
+				if (isPrinted) System.out.printf("MLP. Accuracy. 2nd fold: %.2f%% Iteration: %d\n", partialResult, iteration);
+			}
+		}
+		finalResult += max;
+		return finalResult/2.0;
+	}
+	
+	//method to perform two fold verification of the nearest neighbour algorithm using Euclidean distance
+	public static double euclidianDistanceTwoFoldCrossValidation(int[][] train_fold, int[][] test_fold) {
+		
+		// first fold
+		int[] resultArray = findTheClosest(train_fold, test_fold);
+		int[] expectedArray = extractCategories(test_fold);
+		double firstFoldEval = evaluate(resultArray, expectedArray);
+		
+		//second fold
+		resultArray = findTheClosest(test_fold, train_fold);
+		expectedArray = extractCategories(train_fold);
+		double secondFoldEval = evaluate(resultArray, expectedArray);
+		
+		return (firstFoldEval+secondFoldEval)/2.0;
+	}
+	
+	//read and prepare the data sets
 	public static void readFile(File file, int[][] array) {
-
 		Scanner input;
 		String inputString = "";
 		String inputStringArray[][] = new String[ROWS][COLUMNS];
@@ -73,26 +113,8 @@ public class DigitCategorizer {
 		}
 	}
 	
-	public static void printArray(int[][] array) {
-		for (int row = 0; row < ROWS; row++) {
-			System.out.print("\n" + row + ". ");
-			for (int column = 0; column < COLUMNS; column++) {
-				System.out.print(array[row][column] + " ");
-			}
-			
-		}
-	}
-	
-	public static void printArray(double[][] array) {
-		for (int row = 0; row < ROWS; row++) {
-			System.out.print("\n" + row + ". ");
-			for (int column = 0; column < COLUMNS; column++) {
-				System.out.print(array[row][column] + " ");
-			}
-			
-		}
-	}
-	
+
+	//methods below are used for Euclidean distance categorization
 	public static double euclideanDistance(int[] digit1, int[] digit2) {
 		double sum = 0.0;
 		for (int valueIndex = 0; valueIndex < INPUT_DIMENSION; valueIndex++) {
@@ -119,6 +141,7 @@ public class DigitCategorizer {
 		return match;
 	}
 	
+	//used to evaluate Euclidean distance categorization output
 	public static double evaluate(int[] result, int[] expected) {
 		double correctResults = 0.0;
 		for (int resultDigit = 0; resultDigit < result.length; resultDigit++) {
@@ -129,6 +152,7 @@ public class DigitCategorizer {
 		return correctResults/ROWS * 100.00;
 	}
 	
+	//creates a separate array to store the corresponding categories of the input data
 	public static int[] extractCategories(int[][] data_set) {
 		int[] categories = new int[ROWS];
 		
@@ -139,19 +163,27 @@ public class DigitCategorizer {
 		return categories;
 	}
 	
-	public static double euclidianDistanceTwoFoldCrossValidation(int[][] train_fold, int[][] test_fold) {
-		
-		// first fold
-		int[] resultArray = findTheClosest(train_fold, test_fold);
-		int[] expectedArray = extractCategories(test_fold);
-		double firstFoldEval = evaluate(resultArray, expectedArray);
-		
-		//second fold
-		resultArray = findTheClosest(test_fold, train_fold);
-		expectedArray = extractCategories(train_fold);
-		double secondFoldEval = evaluate(resultArray, expectedArray);
-		
-		return (firstFoldEval+secondFoldEval)/2.0;
+
+	
+	//printArray methods used for testing and verification
+	public static void printArray(int[][] array) {
+		for (int row = 0; row < ROWS; row++) {
+			System.out.print("\n" + row + ". ");
+			for (int column = 0; column < COLUMNS; column++) {
+				System.out.print(array[row][column] + " ");
+			}
+			
+		}
+	}
+	
+	public static void printArray(double[][] array) {
+		for (int row = 0; row < ROWS; row++) {
+			System.out.print("\n" + row + ". ");
+			for (int column = 0; column < COLUMNS; column++) {
+				System.out.print(array[row][column] + " ");
+			}
+			
+		}
 	}
 
 }

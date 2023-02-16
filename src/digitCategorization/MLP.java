@@ -2,9 +2,6 @@ package digitCategorization;
 
 import java.util.Random;
 
-/*UNDONE
-try mini-batches 
- * */
 
 public class MLP {
 
@@ -20,9 +17,8 @@ public class MLP {
 
 	public final static double LEARNING_RATE = 0.15;
 
+	// biases and weights randomly initialised for hidden and output layers
 	public void init() {
-
-		// biases and weights randomly initialised for hidden and output layers
 		Random random = new Random();
 
 		for (int bias = 0; bias < biasesL2.length; bias++) {
@@ -73,22 +69,7 @@ public class MLP {
 		return currentLayerOutput;
 	}
 
-//	// loss function for the individual input
-//	public double loss(int category, double[] actualOutput) {
-//		double[] expectedOutput = new double[NEURONS_OUTPUT_LAYER];
-//		expectedOutput[category] = 1.0;
-//		return squaredError(expectedOutput, actualOutput);
-//	}
-//
-//	// used to calculate the loss function
-//	public double squaredError(double[] expectedOutput, double[] actualOutput) {
-//		double sum = 0.0;
-//		for (int output = 0; output < expectedOutput.length; output++) {
-//			sum += Math.pow(expectedOutput[output] - actualOutput[output], 2);
-//		}
-//		return sum;
-//	}
-
+	//helper method used to convert input data to double, so I don't have to create two feedForward methods for int and double input
 	public double[][] convertToDouble(int[][] dataSet) {
 		double[][] newDataset = new double[dataSet.length][dataSet[0].length];
 		for (int row = 0; row < dataSet.length; row++) {
@@ -99,8 +80,7 @@ public class MLP {
 		return newDataset;
 	}
 
-	// feed the network with mini-batch and return the total cost of the network
-	// UNDONE: mini-batches
+	// feed the network and update the waights using backpropagation after every data point 
 	public void updateWeights(int[][] trainigSet) {
 		int[] categories = DigitCategorizer.extractCategories(trainigSet);
 		double[][] trainSetDouble = convertToDouble(trainigSet);
@@ -148,23 +128,11 @@ public class MLP {
 
 			if (outputCat(outputL3) == categories[input])
 				correctOutputCounter++;
-
-//			//TEST
-//			if (input % 250 == 0) {
-//				System.out.println("Input no. " + input);
-//				System.out.println("Correct category: " + categories[input]);
-//				System.out.println("Output category: " + outputCat(outputL3));
-//				for (int neuron = 0; neuron < outputL3.length; neuron++) {
-//					System.out.println(neuron + ". " + outputL3[neuron]);
-//				}
-//				System.out.println();
-//			}
-
 		}
-
 		return ((double) correctOutputCounter / testSet.length) * 100.00;
 	}
 
+	//network's category prediction - the index of an output neuron with the greatest activation value
 	public int outputCat(double[] output) {
 		double max = 0.0;
 		int indexMax = 0;
@@ -176,30 +144,19 @@ public class MLP {
 		}
 		return indexMax;
 	}
-
-	//I could do that
-	public int[][] miniBatch(int factor, int offset, int[][] trainingSet) {
-		int[][] miniBatch = new int[offset][DigitCategorizer.COLUMNS];
-		for (int digit = factor * offset, digMiniBatch = 0; digit < offset; digit++, digMiniBatch++) {
-			miniBatch[digMiniBatch] = trainingSet[digit];
-		}
-		return miniBatch;
-	}
-
+	
+	//the error if the neuron is an output neuron
 	public static double[] errorOuterLayer(double[] output, double[] target) {
-
 		double[] error = new double[output.length];
 		for (int neuron = 0; neuron < error.length; neuron++) {
 			error[neuron] = (output[neuron] - target[neuron]) * output[neuron] * (1 - output[neuron]);
 		}
 		return error;
-
 	}
-
+	
+	//the error if the neuron is an input neuron
 	public static double[] errorInnerLayer(double[] output, double[] errorOuter, double[][] weights) {
-
 		double[] error = new double[output.length];
-
 		for (int neuron = 0; neuron < output.length; neuron++) {
 			double weightedSum = 0.0;
 			for (int neuronOuter = 0; neuronOuter < errorOuter.length; neuronOuter++) {
@@ -207,20 +164,26 @@ public class MLP {
 			}
 			error[neuron] = weightedSum * output[neuron] * (1 - output[neuron]);
 		}
-
 		return error;
-
 	}
 
+	//gradient descent - change the weights using learning rate and the error
 	public static void backpropagation(double[][] weights, double[] error, double[] outputPreviousLayer,
 			double learningRate) {
-
 		for (int neuron = 0; neuron < error.length; neuron++) {
 			for (int weight = 0; weight < weights[neuron].length; weight++) {
 				weights[neuron][weight] -= learningRate * outputPreviousLayer[weight] * error[neuron];
 			}
 		}
-
+	}
+	
+	//I could do mini-batches in the future to see how it affects results
+	public int[][] miniBatch(int factor, int offset, int[][] trainingSet) {
+		int[][] miniBatch = new int[offset][DigitCategorizer.COLUMNS];
+		for (int digit = factor * offset, digMiniBatch = 0; digit < offset; digit++, digMiniBatch++) {
+			miniBatch[digMiniBatch] = trainingSet[digit];
+		}
+		return miniBatch;
 	}
 
 
